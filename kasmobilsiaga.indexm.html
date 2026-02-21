@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kas Mobil Siaga - Sidebar Transparan</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+    --primary: #0f172a; --card-bg: #1e293b; --accent: #3b82f6; --bg: #0f172a;
+    --text-main: #f1f5f9; --text-dim: #94a3b8; --danger: #ef4444; --success: #10b981;
+    --gold: #f59e0b; --topbar-height: 60px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+body { background: var(--bg); color: var(--text-main); overflow-x: hidden; }
+
+/* TOPBAR TETAP DI ATAS */
+#topbar { 
+    height: var(--topbar-height); 
+    background: #000; 
+    display: flex; 
+    align-items: center; 
+    padding: 0 20px; 
+    position: fixed; 
+    top: 0; left: 0; right: 0; 
+    z-index: 20001; /* Lebih tinggi dari sidebar */
+    border-bottom: 2px solid var(--gold); 
+}
+#hamburger { color: #fff; font-size: 22px; cursor: pointer; margin-right: 15px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 8px; }
+
+/* SIDEBAR TRANSPARAN DI BAWAH TOPBAR */
+#sidebar { 
+    width: 70px; 
+    background: rgba(15, 23, 42, 0.4); /* Sangat Transparan */
+    backdrop-filter: blur(10px); /* Efek Blur Kaca */
+    position: fixed; 
+    top: var(--topbar-height); /* Dimulai di bawah topbar */
+    left: -80px; 
+    bottom: 0; 
+    transition: 0.4s ease; 
+    z-index: 20000; 
+    border-right: 1px solid rgba(255, 255, 255, 0.05); 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    padding-top: 20px; 
+}
+#sidebar.show { left: 0; }
+#sidebar ul { list-style: none; width: 100%; }
+#sidebar ul li { width: 100%; height: 60px; cursor: pointer; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; transition: 0.3s; }
+#sidebar ul li:hover { background: rgba(255,255,255,0.1); border-radius: 10px; }
+#sidebar ul li i { font-size: 22px; opacity: 0.8; }
+
+#sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); display: none; z-index: 15000; }
+#sidebar-overlay.show { display: block; }
+
+/* DASHBOARD */
+#dashboard { margin: 80px auto 40px; padding: 0 15px; max-width: 800px; display: flex; flex-direction: column; gap: 15px; }
+.card { background: var(--card-bg); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
+.card h3 { font-size: 13px; margin-bottom: 15px; color: var(--gold); display: flex; align-items: center; gap: 10px; text-transform: uppercase; }
+
+.total-card { background: #2563eb; color: #fff; text-align: center; border: none; }
+
+.data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.data-item { background: rgba(15, 23, 42, 0.5); padding: 10px; border-radius: 10px; border-left: 3px solid var(--accent); }
+.data-label { font-size: 8px; color: var(--text-dim); text-transform: uppercase; display: block; }
+.data-value { font-weight: bold; font-size: 11px; color: #fff; }
+
+.supir-item { display: flex; align-items: center; gap: 12px; background: rgba(15,23,42,0.5); padding: 10px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 8px; }
+.supir-item img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); }
+.wa-static { color: #25d366; font-size: 11px; display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+
+/* MODALS */
+#modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 30000; padding: 20px; }
+#modal-overlay.show { display: flex; }
+.modal-box { background: var(--card-bg); width: 100%; max-width: 450px; padding: 25px; border-radius: 20px; color: #fff; max-height: 90vh; overflow-y: auto; }
+.modal-box input { width: 100%; padding: 12px; margin: 8px 0; background: #0f172a; border: 1px solid #334155; color: #fff; border-radius: 8px; }
+.main-btn { width: 100%; padding: 14px; background: var(--gold); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: #000; margin-top: 10px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 11px; }
+td { padding: 10px 5px; border-bottom: 1px solid #334155; }
+.manage-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #334155; }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+    <div id="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></div>
+    <h2 style="font-size: 14px; letter-spacing: 1px;">KAS MOBIL SIAGA</h2>
+</div>
+
+<div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div id="sidebar">
+    <ul>
+        <li onclick="openModal('modalPemasukan')"><i class="fas fa-plus-circle" style="color:var(--success)"></i></li>
+        <li onclick="openModal('modalPengeluaran')"><i class="fas fa-minus-circle" style="color:var(--danger)"></i></li>
+        <li onclick="openModal('modalSupir')"><i class="fas fa-user-plus" style="color:var(--accent)"></i></li>
+        <li onclick="openModal('modalMobil')"><i class="fas fa-car" style="color:var(--gold)"></i></li>
+        <li onclick="openModal('modalManageData')"><i class="fas fa-tasks" style="color:#a855f7"></i></li>
+    </ul>
+</div>
+
+<div id="dashboard">
+    <div class="card total-card">
+        <p style="font-size: 10px; font-weight: 600; opacity: 0.8">SALDO AKTIF</p>
+        <h1 id="totalSaldo" style="font-size: 36px; margin: 5px 0;">Rp 0</h1>
+        <div style="display:flex; justify-content: space-around; font-size: 10px; margin-top: 15px; background: rgba(0,0,0,0.1); padding: 10px; border-radius: 12px;">
+            <span>Masuk:<br><b id="totMasuk">Rp 0</b></span>
+            <span>Keluar:<br><b id="totKeluar">Rp 0</b></span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3><i class="fas fa-history"></i> Riwayat Transaksi</h3>
+        <table><tbody id="riwayatBody"></tbody></table>
+    </div>
+
+    <div class="card">
+        <h3><i class="fas fa-user-shield"></i> Daftar Supir Siaga</h3>
+        <div id="supirList"></div>
+    </div>
+
+    <div class="card">
+        <h3><i class="fas fa-id-card"></i> Identitas Kendaraan</h3>
+        <div class="data-grid">
+            <div class="data-item"><span class="data-label">Nama Pemilik</span><span class="data-value" id="v_pemilik">YAYASAN</span></div>
+            <div class="data-item"><span class="data-label">No. Polisi</span><span class="data-value" id="v_nopol">-</span></div>
+            <div class="data-item"><span class="data-label">Merk / Tipe</span><span class="data-value" id="v_merk">-</span></div>
+            <div class="data-item"><span class="data-label">No. BPKB</span><span class="data-value" id="v_bpkb">-</span></div>
+            <div class="data-item"><span class="data-label">No. Rangka</span><span class="data-value" id="v_rangka">-</span></div>
+            <div class="data-item"><span class="data-label">No. Mesin</span><span class="data-value" id="v_mesin">-</span></div>
+            <div class="data-item" style="border-left-color:var(--danger)"><span class="data-label">Pajak Tahunan</span><span class="data-value" id="v_pajak">-</span></div>
+            <div class="data-item" style="border-left-color:var(--danger)"><span class="data-label">Masa STNK</span><span class="data-value" id="v_stnk">-</span></div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-overlay" onclick="closeModalOutside(event)">
+    <div class="modal-box" id="modalPemasukan" style="display:none">
+        <h3>Pemasukan</h3>
+        <input type="text" id="namaPasienMasuk" placeholder="Nama Pasien">
+        <input type="text" id="ketMasuk" placeholder="Keterangan">
+        <input type="number" id="nomMasuk" placeholder="Nominal">
+        <button class="main-btn" onclick="saveTransaksi('masuk')">Simpan</button>
+    </div>
+    <div class="modal-box" id="modalPengeluaran" style="display:none">
+        <h3>Pengeluaran</h3>
+        <input type="text" id="ketKeluar" placeholder="Keterangan">
+        <input type="number" id="nomKeluar" placeholder="Nominal">
+        <button class="main-btn" style="background:var(--danger); color:white" onclick="saveTransaksi('keluar')">Simpan</button>
+    </div>
+    <div class="modal-box" id="modalSupir" style="display:none">
+        <h3>Data Supir</h3>
+        <input type="hidden" id="editSupirId">
+        <input type="text" id="namaSupir" placeholder="Nama">
+        <input type="tel" id="hpSupir" placeholder="No HP">
+        <input type="file" id="fotoSupir" accept="image/*">
+        <button class="main-btn" onclick="saveSupir()">Simpan Supir</button>
+    </div>
+    <div class="modal-box" id="modalMobil" style="display:none">
+        <h3>Data Kendaraan</h3>
+        <input type="text" id="i_pemilik" placeholder="Nama Pemilik">
+        <input type="text" id="i_nopol" placeholder="No. Polisi">
+        <input type="text" id="i_merk" placeholder="Merk / Tipe">
+        <input type="text" id="i_bpkb" placeholder="No. BPKB">
+        <input type="text" id="i_rangka" placeholder="No. Rangka">
+        <input type="text" id="i_mesin" placeholder="No. Mesin">
+        <input type="text" id="i_pajak" placeholder="Pajak Tahunan">
+        <input type="text" id="i_stnk" placeholder="Masa STNK">
+        <button class="main-btn" onclick="simpanMobil()">Update Data</button>
+    </div>
+    <div class="modal-box" id="modalManageData" style="display:none">
+        <h3>Kelola Data</h3>
+        <div id="manageSupirList"></div>
+        <hr style="opacity:0.1; margin:15px 0;">
+        <div id="manageTransList"></div>
+    </div>
+</div>
+
+<script>
+let db;
+const request = indexedDB.open("KasMobilDB", 1);
+request.onupgradeneeded = (e) => {
+    db = e.target.result;
+    db.createObjectStore("transaksi", { keyPath: "id", autoIncrement: true });
+    db.createObjectStore("supir", { keyPath: "id", autoIncrement: true });
+    db.createObjectStore("mobil", { keyPath: "key" });
+};
+request.onsuccess = (e) => { db = e.target.result; loadAllData(); };
+
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('show');
+    document.getElementById('sidebar-overlay').classList.toggle('show');
+}
+
+function openModal(id) {
+    if(id === 'modalManageData') renderManage();
+    document.getElementById('modal-overlay').classList.add('show');
+    document.querySelectorAll('.modal-box').forEach(m => m.style.display = 'none');
+    document.getElementById(id).style.display = 'block';
+    if(document.getElementById('sidebar').classList.contains('show')) toggleSidebar();
+}
+
+function closeModalOutside(e) { if(e.target.id === 'modal-overlay') document.getElementById('modal-overlay').classList.remove('show'); }
+
+function loadAllData() {
+    db.transaction("transaksi").objectStore("transaksi").getAll().onsuccess = (e) => {
+        let tm = 0, tk = 0;
+        const body = document.getElementById('riwayatBody');
+        body.innerHTML = "";
+        e.target.result.reverse().forEach(t => {
+            if(t.tipe === 'masuk') tm += t.nominal; else tk += t.nominal;
+            body.innerHTML += `<tr><td>${t.tgl}</td><td><b>${t.nama}</b></td><td>${t.ket}</td><td style="color:${t.tipe==='masuk'?'var(--success)':'var(--danger)'}; font-weight:bold">Rp ${t.nominal.toLocaleString()}</td></tr>`;
+        });
+        document.getElementById('totalSaldo').innerText = 'Rp ' + (tm - tk).toLocaleString();
+        document.getElementById('totMasuk').innerText = 'Rp ' + tm.toLocaleString();
+        document.getElementById('totKeluar').innerText = 'Rp ' + tk.toLocaleString();
+    };
+
+    db.transaction("supir").objectStore("supir").getAll().onsuccess = (e) => {
+        const list = document.getElementById('supirList');
+        list.innerHTML = "";
+        e.target.result.forEach(s => {
+            list.innerHTML += `<div class="supir-item"><img src="${s.foto}"><div><b>${s.nama}</b><br><div class="wa-static"><i class="fab fa-whatsapp"></i> ${s.hp}</div></div></div>`;
+        });
+    };
+
+    db.transaction("mobil").objectStore("mobil").getAll().onsuccess = (e) => {
+        e.target.result.forEach(m => { if(document.getElementById('v_'+m.key)) document.getElementById('v_'+m.key).innerText = m.val; });
+    };
+}
+
+function saveTransaksi(tipe) {
+    const data = { tipe: tipe, nama: tipe === 'masuk' ? document.getElementById('namaPasienMasuk').value || "-" : "-", ket: tipe === 'masuk' ? document.getElementById('ketMasuk').value : document.getElementById('ketKeluar').value, nominal: parseInt(tipe === 'masuk' ? document.getElementById('nomMasuk').value : document.getElementById('nomKeluar').value) || 0, tgl: "19/02/2026" };
+    db.transaction("transaksi", "readwrite").objectStore("transaksi").add(data).onsuccess = () => { loadAllData(); document.getElementById('modal-overlay').classList.remove('show'); };
+}
+
+function saveSupir() {
+    const id = document.getElementById('editSupirId').value;
+    const n = document.getElementById('namaSupir').value;
+    const h = document.getElementById('hpSupir').value;
+    const f = document.getElementById('fotoSupir').files[0];
+    const exec = (pic) => {
+        const tx = db.transaction("supir", "readwrite").objectStore("supir");
+        const obj = { nama: n, hp: h, foto: pic };
+        if(id) { obj.id = parseInt(id); tx.put(obj); } else { tx.add(obj); }
+        tx.transaction.oncomplete = () => { loadAllData(); document.getElementById('modal-overlay').classList.remove('show'); };
+    };
+    if(f) { const r = new FileReader(); r.onload = (e) => exec(e.target.result); r.readAsDataURL(f); }
+    else if(id) { db.transaction("supir").objectStore("supir").get(parseInt(id)).onsuccess = (e) => exec(e.target.result.foto); }
+}
+
+function renderManage() {
+    const sList = document.getElementById('manageSupirList');
+    const tList = document.getElementById('manageTransList');
+    sList.innerHTML = "<b>DAFTAR SUPIR:</b>"; tList.innerHTML = "<b>DAFTAR TRANSAKSI:</b>";
+    db.transaction("supir").objectStore("supir").getAll().onsuccess = (e) => {
+        e.target.result.forEach(s => {
+            sList.innerHTML += `<div class="manage-item"><span>${s.nama}</span><div><i class="fas fa-edit" style="color:var(--gold); cursor:pointer" onclick="prepEditSupir(${s.id},'${s.nama}','${s.hp}')"></i><i class="fas fa-trash" style="color:var(--danger); cursor:pointer; margin-left:15px" onclick="deleteData('supir',${s.id})"></i></div></div>`;
+        });
+    };
+    db.transaction("transaksi").objectStore("transaksi").getAll().onsuccess = (e) => {
+        e.target.result.reverse().forEach(t => {
+            tList.innerHTML += `<div class="manage-item"><span>${t.nama !== '-' ? t.nama : t.ket}</span><i class="fas fa-trash" style="color:var(--danger); cursor:pointer" onclick="deleteData('transaksi',${t.id})"></i></div>`;
+        });
+    };
+}
+
+function prepEditSupir(id, n, h) { openModal('modalSupir'); document.getElementById('editSupirId').value = id; document.getElementById('namaSupir').value = n; document.getElementById('hpSupir').value = h; }
+function deleteData(store, id) { if(confirm('Hapus permanen?')) db.transaction(store, "readwrite").objectStore(store).delete(id).onsuccess = () => { loadAllData(); renderManage(); }; }
+function simpanMobil() {
+    const tx = db.transaction("mobil", "readwrite");
+    ['pemilik','nopol','merk','bpkb','rangka','mesin','pajak','stnk'].forEach(k => {
+        const v = document.getElementById('i_'+k).value;
+        if(v) tx.objectStore("mobil").put({key: k, val: v});
+    });
+    tx.oncomplete = () => { loadAllData(); document.getElementById('modal-overlay').classList.remove('show'); };
+}
+</script>
+</body>
+</html>
